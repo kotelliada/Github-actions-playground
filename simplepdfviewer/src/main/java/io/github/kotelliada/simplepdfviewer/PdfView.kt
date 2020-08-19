@@ -76,7 +76,7 @@ class PdfView : RecyclerView {
         loadPdfResult = result
         tasks = LinkedBlockingQueue<RenderPageTask>()
         recyclingImageViews = ConcurrentHashMap<Int, Int>()
-        pageRenderer = PageRenderer(loadPdfResult!!.pdfRenderer)
+        pageRenderer = PageRenderer(loadPdfResult!!.pdfRenderer, PageSizeCalculator())
         tasksExecutor!!.execute(
             RenderPdfTask(
                 pageRenderer!!,
@@ -126,7 +126,7 @@ class PdfView : RecyclerView {
         if (!isRecycled.get()) {
             val imageViewAware = ImageViewAware(imageView)
             recyclingImageViews!![imageViewAware.getId()] = pageNumber
-            tasks!!.put(RenderPageTask(imageViewAware, pageNumber))
+            tasks!!.put(RenderPageTask(imageViewAware, pageNumber, measuredWidth, measuredHeight))
         }
     }
 
