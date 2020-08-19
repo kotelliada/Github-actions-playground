@@ -21,7 +21,7 @@ internal class ImageViewAware(imageView: ImageView) {
             val imageView = imageViewRef.get()
             imageView?.setImageBitmap(bitmap)
         } else {
-            throw IllegalStateException("")
+            throw IllegalStateException("Method has to be called on the main thread")
         }
     }
 
