@@ -10,12 +10,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        pdfView.fromAssets("sample.pdf")
+        pdfView.fromAsset("sample.pdf")
             .load()
-    }
-
-    override fun onDestroy() {
-        pdfView.release(false)
-        super.onDestroy()
     }
 }
