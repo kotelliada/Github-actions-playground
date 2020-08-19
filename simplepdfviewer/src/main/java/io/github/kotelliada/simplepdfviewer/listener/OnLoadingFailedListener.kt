@@ -1,6 +1,6 @@
 package io.github.kotelliada.simplepdfviewer.listener
 
-interface OnErrorListener {
+interface OnLoadingFailedListener {
     /** Called when an error occurs while opening a PDF file */
-    fun onError(ex: Throwable)
+    fun onLoadingFailed(ex: Throwable)
 }

@@ -11,7 +11,8 @@ import android.widget.ImageView
 import androidx.annotation.MainThread
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import io.github.kotelliada.simplepdfviewer.listener.OnErrorListener
+import io.github.kotelliada.simplepdfviewer.listener.OnLoadingCompletedListener
+import io.github.kotelliada.simplepdfviewer.listener.OnLoadingFailedListener
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -29,7 +30,8 @@ class PdfView : RecyclerView {
 
     private var tasks: BlockingQueue<RenderPageTask>? = null
 
-    private var onErrorListener: OnErrorListener? = null
+    private var onLoadingFailedListener: OnLoadingFailedListener? = null
+    private var onLoadingCompletedListener: OnLoadingCompletedListener? = null
 
     constructor(context: Context) : super(context)
 
@@ -64,12 +66,13 @@ class PdfView : RecyclerView {
 
     @MainThread
     internal fun loadError(ex: Throwable) {
-        onErrorListener?.onError(ex)
+        onLoadingFailedListener?.onLoadingFailed(ex)
         recycle()
     }
 
     @MainThread
     internal fun loadComplete(result: LoadPdfResult) {
+        onLoadingCompletedListener?.onLoadingCompleted(result.pdfRenderer.pageCount)
         loadPdfResult = result
         tasks = LinkedBlockingQueue<RenderPageTask>()
         recyclingImageViews = ConcurrentHashMap<Int, Int>()
@@ -116,7 +119,7 @@ class PdfView : RecyclerView {
         tasksExecutor = null
         pageRenderer = null
         recyclingImageViews = null
-        onErrorListener = null
+        onLoadingFailedListener = null
     }
 
     private fun render(imageView: ImageView, pageNumber: Int) {
@@ -127,21 +130,33 @@ class PdfView : RecyclerView {
         }
     }
 
-    private fun setOnErrorListener(listener: OnErrorListener?) {
-        onErrorListener = listener
+    private fun setOnLoadingFailedListener(listener: OnLoadingFailedListener?) {
+        onLoadingFailedListener = listener
+    }
+
+    private fun setOnLoadingCompletedListener(listener: OnLoadingCompletedListener?) {
+        onLoadingCompletedListener = listener
     }
 
     inner class Configuration(private val pdfFileName: String) {
 
-        private var onErrorListener: OnErrorListener? = null
+        private var onLoadingFailedListener: OnLoadingFailedListener? = null
+        private var onLoadingCompletedListener: OnLoadingCompletedListener? = null
 
-        fun setOnErrorListener(listener: OnErrorListener) {
-            onErrorListener = listener
+        fun setOnLoadingFailedListener(listener: OnLoadingFailedListener): Configuration {
+            this.onLoadingFailedListener = listener
+            return this
+        }
+
+        fun setOnLoadingCompletedListener(listener: OnLoadingCompletedListener): Configuration {
+            this.onLoadingCompletedListener = listener
+            return this
         }
 
         fun load() {
             this@PdfView.recycle()
-            this@PdfView.setOnErrorListener(onErrorListener)
+            this@PdfView.setOnLoadingFailedListener(this.onLoadingFailedListener)
+            this@PdfView.setOnLoadingCompletedListener(this.onLoadingCompletedListener)
             this@PdfView.load(pdfFileName)
         }
     }
