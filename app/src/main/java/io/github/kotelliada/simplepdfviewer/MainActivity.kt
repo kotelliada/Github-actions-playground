@@ -13,7 +13,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        pdfView.fromAsset("sample.pdf")
+        pdfView.fromAsset("pdf.pdf")
             .setOnLoadingCompletedListener(object : OnLoadingCompletedListener {
                 override fun onLoadingCompleted(pagesCount: Int) {
                     Toast.makeText(
