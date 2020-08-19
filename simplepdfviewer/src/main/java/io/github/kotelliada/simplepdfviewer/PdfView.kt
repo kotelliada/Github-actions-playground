@@ -11,6 +11,7 @@ import android.widget.ImageView
 import androidx.annotation.MainThread
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.github.kotelliada.simplepdfviewer.listener.OnErrorListener
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -28,6 +29,8 @@ class PdfView : RecyclerView {
 
     private var tasks: BlockingQueue<RenderPageTask>? = null
 
+    private var onErrorListener: OnErrorListener? = null
+
     constructor(context: Context) : super(context)
 
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
@@ -43,12 +46,25 @@ class PdfView : RecyclerView {
         recycle()
     }
 
+    override fun setAdapter(adapter: Adapter<*>?) {
+        throwFromUnsupportedMethod()
+    }
+
+    override fun setLayoutManager(layout: LayoutManager?) {
+        throwFromUnsupportedMethod()
+    }
+
+    private inline fun throwFromUnsupportedMethod() {
+        throw UnsupportedOperationException("You are not allowed to call this method")
+    }
+
     fun fromAsset(pdfFileName: String): Configuration {
         return Configuration(pdfFileName)
     }
 
     @MainThread
     internal fun loadError(ex: Throwable) {
+        onErrorListener?.onError(ex)
         recycle()
     }
 
@@ -100,6 +116,7 @@ class PdfView : RecyclerView {
         tasksExecutor = null
         pageRenderer = null
         recyclingImageViews = null
+        onErrorListener = null
     }
 
     private fun render(imageView: ImageView, pageNumber: Int) {
@@ -110,10 +127,21 @@ class PdfView : RecyclerView {
         }
     }
 
+    private fun setOnErrorListener(listener: OnErrorListener?) {
+        onErrorListener = listener
+    }
+
     inner class Configuration(private val pdfFileName: String) {
+
+        private var onErrorListener: OnErrorListener? = null
+
+        fun setOnErrorListener(listener: OnErrorListener) {
+            onErrorListener = listener
+        }
 
         fun load() {
             this@PdfView.recycle()
+            this@PdfView.setOnErrorListener(onErrorListener)
             this@PdfView.load(pdfFileName)
         }
     }
