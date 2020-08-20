@@ -1,9 +1,11 @@
-package io.github.kotelliada.simplepdfviewer
+package io.github.kotelliada.simplepdfviewer.tasks
 
 import android.content.Context
 import android.graphics.pdf.PdfRenderer
 import android.os.Handler
 import android.os.ParcelFileDescriptor
+import io.github.kotelliada.simplepdfviewer.LoadPdfResult
+import io.github.kotelliada.simplepdfviewer.PdfView
 import io.github.kotelliada.simplepdfviewer.utils.FileUtils
 import java.lang.ref.WeakReference
 
@@ -21,7 +23,10 @@ internal class LoadPdfTask(
             val pdfFile = FileUtils.createFileFromAsset(context, pdfFileName)
             val fd = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY)
             val pdfRenderer = PdfRenderer(fd!!)
-            val result = LoadPdfResult(fd, pdfRenderer)
+            val result = LoadPdfResult(
+                fd,
+                pdfRenderer
+            )
             mainThreadHandler.post { pdfViewRef.get()?.loadComplete(result) }
         } catch (ex: Throwable) {
             mainThreadHandler.post { pdfViewRef.get()?.loadError(ex) }

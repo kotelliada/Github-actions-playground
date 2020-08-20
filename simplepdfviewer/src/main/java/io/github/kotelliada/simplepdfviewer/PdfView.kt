@@ -11,8 +11,14 @@ import android.widget.ImageView
 import androidx.annotation.MainThread
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import io.github.kotelliada.simplepdfviewer.aware.ImageViewAware
 import io.github.kotelliada.simplepdfviewer.listener.OnLoadingCompletedListener
 import io.github.kotelliada.simplepdfviewer.listener.OnLoadingFailedListener
+import io.github.kotelliada.simplepdfviewer.rendering.PageRenderer
+import io.github.kotelliada.simplepdfviewer.rendering.PageSizeCalculator
+import io.github.kotelliada.simplepdfviewer.tasks.LoadPdfTask
+import io.github.kotelliada.simplepdfviewer.tasks.ReleaseResourcesTask
+import io.github.kotelliada.simplepdfviewer.tasks.RenderPdfTask
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -26,9 +32,7 @@ class PdfView : RecyclerView {
 
     private var tasksExecutor: ExecutorService? = null
 
-    private var pageRenderer: PageRenderer? = null
-
-    private var tasks: BlockingQueue<RenderPageTask>? = null
+    private var requests: BlockingQueue<RenderPageRequest>? = null
 
     private var onLoadingFailedListener: OnLoadingFailedListener? = null
     private var onLoadingCompletedListener: OnLoadingCompletedListener? = null
@@ -74,13 +78,13 @@ class PdfView : RecyclerView {
     internal fun loadComplete(result: LoadPdfResult) {
         onLoadingCompletedListener?.onLoadingCompleted(result.pdfRenderer.pageCount)
         loadPdfResult = result
-        tasks = LinkedBlockingQueue<RenderPageTask>()
+        requests = LinkedBlockingQueue<RenderPageRequest>()
         recyclingImageViews = ConcurrentHashMap<Int, Int>()
-        pageRenderer = PageRenderer(loadPdfResult!!.pdfRenderer, PageSizeCalculator())
+        val pageRenderer = PageRenderer(loadPdfResult!!.pdfRenderer, PageSizeCalculator())
         tasksExecutor!!.execute(
             RenderPdfTask(
-                pageRenderer!!,
-                tasks!!,
+                pageRenderer,
+                requests!!,
                 isRecycled,
                 recyclingImageViews!!,
                 Handler(Looper.getMainLooper())
@@ -111,13 +115,16 @@ class PdfView : RecyclerView {
     private fun recycle() {
         isRecycled.set(true)
         if (loadPdfResult != null) {
-            tasksExecutor?.execute(ReleaseResourcesTask(loadPdfResult!!))
+            tasksExecutor?.execute(
+                ReleaseResourcesTask(
+                    loadPdfResult!!
+                )
+            )
             loadPdfResult = null
         }
-        tasks = null
+        requests = null
         tasksExecutor?.shutdown()
         tasksExecutor = null
-        pageRenderer = null
         recyclingImageViews = null
         onLoadingFailedListener = null
     }
@@ -126,7 +133,13 @@ class PdfView : RecyclerView {
         if (!isRecycled.get()) {
             val imageViewAware = ImageViewAware(imageView)
             recyclingImageViews!![imageViewAware.getId()] = pageNumber
-            tasks!!.put(RenderPageTask(imageViewAware, pageNumber, measuredWidth, measuredHeight))
+            val request = RenderPageRequest(
+                imageViewAware,
+                pageNumber,
+                measuredWidth,
+                measuredHeight
+            )
+            requests!!.put(request)
         }
     }
 

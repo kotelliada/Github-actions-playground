@@ -1,4 +1,4 @@
-package io.github.kotelliada.simplepdfviewer
+package io.github.kotelliada.simplepdfviewer.aware
 
 import android.graphics.Bitmap
 import android.os.Looper

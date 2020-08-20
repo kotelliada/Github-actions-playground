@@ -1,4 +1,4 @@
-package io.github.kotelliada.simplepdfviewer
+package io.github.kotelliada.simplepdfviewer.rendering
 
 import android.graphics.pdf.PdfRenderer
 

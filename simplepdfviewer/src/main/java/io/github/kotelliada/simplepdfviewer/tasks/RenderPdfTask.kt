@@ -1,14 +1,16 @@
-package io.github.kotelliada.simplepdfviewer
+package io.github.kotelliada.simplepdfviewer.tasks
 
 import android.graphics.Bitmap
 import android.os.Handler
+import io.github.kotelliada.simplepdfviewer.rendering.PageRenderer
+import io.github.kotelliada.simplepdfviewer.RenderPageRequest
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class RenderPdfTask(
     private val pageRenderer: PageRenderer,
-    private val tasksQueue: BlockingQueue<RenderPageTask>,
+    private val requestsQueue: BlockingQueue<RenderPageRequest>,
     private val isRecycled: AtomicBoolean,
     private val recycledImageViews: ConcurrentMap<Int, Int>,
     private val mainThreadHandler: Handler
@@ -20,38 +22,38 @@ internal class RenderPdfTask(
                 break
             }
 
-            val task = tasksQueue.take()
-            if (!shouldRenderThePage(task)) {
+            val request = requestsQueue.take()
+            if (!shouldRenderThePage(request)) {
                 continue
             }
 
-            var cached = getCached(task)
+            var cached = getCached(request)
             if (cached == null) {
-                cached = pageRenderer.render(task)
+                cached = pageRenderer.render(request)
             }
 
             if (isRecycled.get()) {
                 break
             }
 
-            if (shouldRenderThePage(task)) {
+            if (shouldRenderThePage(request)) {
                 saveToCache(cached)
                 mainThreadHandler.post {
-                    if (shouldRenderThePage(task)) {
-                        task.imageViewAware.setBitmap(cached)
+                    if (shouldRenderThePage(request)) {
+                        request.imageViewAware.setBitmap(cached)
                     }
                 }
             }
         }
     }
 
-    private fun shouldRenderThePage(task: RenderPageTask): Boolean {
-        return !task.imageViewAware.isCollected() &&
-                task.pageNumber == recycledImageViews[task.imageViewAware.getId()]
+    private fun shouldRenderThePage(request: RenderPageRequest): Boolean {
+        return !request.imageViewAware.isCollected() &&
+                request.pageNumber == recycledImageViews[request.imageViewAware.getId()]
 
     }
 
-    private fun getCached(task: RenderPageTask): Bitmap? {
+    private fun getCached(request: RenderPageRequest): Bitmap? {
         return null
     }
 
