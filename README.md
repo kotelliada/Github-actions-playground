@@ -6,3 +6,4 @@
 - Restructure packages
 - Write user-friendly Readme
 - Write tests
+- Setup CI/CD
