@@ -3,7 +3,7 @@ package io.github.kotelliada.simplepdfviewer.rendering
 import android.graphics.Bitmap
 import android.util.LruCache
 
-class BitmapsCache(cacheSize: Int) : LruCache<String, Bitmap>(cacheSize) {
+internal class BitmapsCache(cacheSize: Int) : LruCache<String, Bitmap>(cacheSize) {
 
     fun clear() = evictAll()
 
