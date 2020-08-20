@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import io.github.kotelliada.simplepdfviewer.aware.ImageViewAware
 import io.github.kotelliada.simplepdfviewer.listener.OnLoadingCompletedListener
 import io.github.kotelliada.simplepdfviewer.listener.OnLoadingFailedListener
+import io.github.kotelliada.simplepdfviewer.rendering.BitmapsCache
 import io.github.kotelliada.simplepdfviewer.rendering.PageRenderer
 import io.github.kotelliada.simplepdfviewer.rendering.PageSizeCalculator
 import io.github.kotelliada.simplepdfviewer.tasks.LoadPdfTask
@@ -33,6 +34,8 @@ class PdfView : RecyclerView {
     private var tasksExecutor: ExecutorService? = null
 
     private var requests: BlockingQueue<RenderPageRequest>? = null
+
+    private var bitmapsCache: BitmapsCache? = null
 
     private var onLoadingFailedListener: OnLoadingFailedListener? = null
     private var onLoadingCompletedListener: OnLoadingCompletedListener? = null
@@ -76,8 +79,12 @@ class PdfView : RecyclerView {
 
     @MainThread
     internal fun loadComplete(result: LoadPdfResult) {
+        val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
+        val cacheSize = maxMemory / 8
+
         onLoadingCompletedListener?.onLoadingCompleted(result.pdfRenderer.pageCount)
         loadPdfResult = result
+        bitmapsCache = BitmapsCache(cacheSize)
         requests = LinkedBlockingQueue<RenderPageRequest>()
         recyclingImageViews = ConcurrentHashMap<Int, Int>()
         val pageRenderer = PageRenderer(loadPdfResult!!.pdfRenderer, PageSizeCalculator())
@@ -87,7 +94,8 @@ class PdfView : RecyclerView {
                 requests!!,
                 isRecycled,
                 recyclingImageViews!!,
-                Handler(Looper.getMainLooper())
+                Handler(Looper.getMainLooper()),
+                bitmapsCache!!
             )
         )
         super.setAdapter(PdfViewAdapter(context, result.pdfRenderer.pageCount))
@@ -115,9 +123,10 @@ class PdfView : RecyclerView {
     private fun recycle() {
         isRecycled.set(true)
         if (loadPdfResult != null) {
-            tasksExecutor?.execute(ReleaseResourcesTask(loadPdfResult!!))
+            tasksExecutor?.execute(ReleaseResourcesTask(loadPdfResult!!, bitmapsCache!!))
             loadPdfResult = null
         }
+        bitmapsCache = null
         requests = null
         tasksExecutor?.shutdown()
         tasksExecutor = null

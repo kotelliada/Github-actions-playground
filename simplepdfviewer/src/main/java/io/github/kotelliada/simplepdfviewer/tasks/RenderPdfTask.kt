@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.os.Handler
 import io.github.kotelliada.simplepdfviewer.rendering.PageRenderer
 import io.github.kotelliada.simplepdfviewer.RenderPageRequest
+import io.github.kotelliada.simplepdfviewer.rendering.BitmapsCache
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
@@ -14,7 +15,8 @@ internal class RenderPdfTask(
     private val requestsQueue: BlockingQueue<RenderPageRequest>,
     private val isRecycled: AtomicBoolean,
     private val recycledImageViews: ConcurrentMap<Int, Int>,
-    private val mainThreadHandler: Handler
+    private val mainThreadHandler: Handler,
+    private val bitmapsCache: BitmapsCache
 ) : Runnable {
 
     override fun run() {
@@ -29,20 +31,28 @@ internal class RenderPdfTask(
                 continue
             }
 
-            var cached = getCached(request)
-            if (cached == null) {
-                cached = pageRenderer.render(request)
+            val cached = getCached(request)
+
+            if (cached != null) {
+                mainThreadHandler.post {
+                    if (shouldRenderThePage(request)) {
+                        request.imageViewAware.setBitmap(cached)
+                    }
+                }
+                continue
             }
+
+            val bitmap = pageRenderer.render(request)
 
             if (isRecycled.get()) {
                 break
             }
 
             if (shouldRenderThePage(request)) {
-                saveToCache(cached)
+                saveToCache(bitmap, request)
                 mainThreadHandler.post {
                     if (shouldRenderThePage(request)) {
-                        request.imageViewAware.setBitmap(cached)
+                        request.imageViewAware.setBitmap(bitmap)
                     }
                 }
             }
@@ -56,9 +66,11 @@ internal class RenderPdfTask(
     }
 
     private fun getCached(request: RenderPageRequest): Bitmap? {
-        return null
+        return bitmapsCache.get(BitmapsCache.buildKey(request.pageNumber))
     }
 
-    private fun saveToCache(bitmap: Bitmap) {
+    private fun saveToCache(bitmap: Bitmap, request: RenderPageRequest) {
+        val key = BitmapsCache.buildKey(request.pageNumber)
+        bitmapsCache.put(key, bitmap)
     }
 }
