@@ -115,11 +115,7 @@ class PdfView : RecyclerView {
     private fun recycle() {
         isRecycled.set(true)
         if (loadPdfResult != null) {
-            tasksExecutor?.execute(
-                ReleaseResourcesTask(
-                    loadPdfResult!!
-                )
-            )
+            tasksExecutor?.execute(ReleaseResourcesTask(loadPdfResult!!))
             loadPdfResult = null
         }
         requests = null

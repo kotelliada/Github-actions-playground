@@ -6,6 +6,7 @@ import io.github.kotelliada.simplepdfviewer.rendering.PageRenderer
 import io.github.kotelliada.simplepdfviewer.RenderPageRequest
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class RenderPdfTask(
@@ -22,7 +23,8 @@ internal class RenderPdfTask(
                 break
             }
 
-            val request = requestsQueue.take()
+            val request = requestsQueue.poll(500, TimeUnit.MILLISECONDS) ?: continue
+
             if (!shouldRenderThePage(request)) {
                 continue
             }
