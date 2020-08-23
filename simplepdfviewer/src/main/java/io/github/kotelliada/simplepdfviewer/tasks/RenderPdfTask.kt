@@ -6,7 +6,6 @@ import io.github.kotelliada.simplepdfviewer.rendering.PageRenderer
 import io.github.kotelliada.simplepdfviewer.RenderPageRequest
 import io.github.kotelliada.simplepdfviewer.rendering.BitmapsCache
 import java.util.concurrent.BlockingQueue
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -14,7 +13,7 @@ internal class RenderPdfTask(
     private val pageRenderer: PageRenderer,
     private val requestsQueue: BlockingQueue<RenderPageRequest>,
     private val isRecycled: AtomicBoolean,
-    private val recycledImageViews: ConcurrentMap<Int, Int>,
+    private val recycledImageViews: Map<Int, Int>,
     private val mainThreadHandler: Handler,
     private val bitmapsCache: BitmapsCache
 ) : Runnable {

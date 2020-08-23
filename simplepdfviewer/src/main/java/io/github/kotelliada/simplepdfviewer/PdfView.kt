@@ -20,8 +20,10 @@ import io.github.kotelliada.simplepdfviewer.rendering.PageSizeCalculator
 import io.github.kotelliada.simplepdfviewer.tasks.LoadPdfTask
 import io.github.kotelliada.simplepdfviewer.tasks.ReleaseResourcesTask
 import io.github.kotelliada.simplepdfviewer.tasks.RenderPdfTask
+import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.collections.HashMap
 
 class PdfView : RecyclerView {
 
@@ -29,7 +31,7 @@ class PdfView : RecyclerView {
 
     private var loadPdfResult: LoadPdfResult? = null
 
-    private var recyclingImageViews: ConcurrentMap<Int, Int>? = null
+    private var recyclingImageViews: MutableMap<Int, Int>? = null
 
     private var tasksExecutor: ExecutorService? = null
 
@@ -86,7 +88,7 @@ class PdfView : RecyclerView {
         loadPdfResult = result
         bitmapsCache = BitmapsCache(cacheSize)
         requests = LinkedBlockingQueue<RenderPageRequest>()
-        recyclingImageViews = ConcurrentHashMap<Int, Int>()
+        recyclingImageViews = Collections.synchronizedMap(HashMap())
         val pageRenderer = PageRenderer(loadPdfResult!!.pdfRenderer, PageSizeCalculator())
         tasksExecutor!!.execute(
             RenderPdfTask(
