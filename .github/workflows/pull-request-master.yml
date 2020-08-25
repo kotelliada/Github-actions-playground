@@ -10,11 +10,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
-
-    - name: Set up JDK
-      uses: actions/setup-java@v1.4.2
-      with:
-        java-version: 1.8
     
     - name: Build the library
       run: ./gradlew clean :simplepdfviewer:build --stacktrace
@@ -28,11 +23,19 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
-
-    - name: Set up JDK
-      uses: actions/setup-java@v1.4.2
-      with:
-        java-version: 1.8
     
     - name: Unit tests
-      run: ./gradlew clean :simplepdfviewer:test
+      run: ./gradlew :simplepdfviewer:test --stacktrace
+  
+  instrumented-tests:
+    runs-on: macos-latest
+    needs: [unit-tests]
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Instrumented tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 29
+        script: ./gradlew :simplepdfviewer:connectedAndroidTest --stacktrace
