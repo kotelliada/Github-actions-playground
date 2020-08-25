@@ -1,4 +1,4 @@
-package io.github.kotelliada.simplepdfviewer
+package io.github.kotelliada.simplepdfviewerexample
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

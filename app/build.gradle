@@ -7,7 +7,7 @@ android {
     buildToolsVersion "30.0.1"
 
     defaultConfig {
-        applicationId "io.github.kotelliada.simplepdfviewer"
+        applicationId "io.github.kotelliada.simplepdfviewerexample"
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 1
