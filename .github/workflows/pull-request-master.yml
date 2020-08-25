@@ -43,14 +43,9 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
-
-    - name: Set up JDK
-      uses: actions/setup-java@v1.4.2
-      with:
-        java-version: 1.8
     
     - name: Instrumented tests
       uses: reactivecircus/android-emulator-runner@v2
       with:
-        api-level: 30
+        api-level: 29
         script: ./gradlew :simplepdfviewer:connectedAndroidTest --stacktrace
